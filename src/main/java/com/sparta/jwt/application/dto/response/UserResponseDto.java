@@ -4,7 +4,7 @@ import com.sparta.jwt.application.dto.RoleDto;
 import lombok.Builder;
 
 @Builder
-public record JoinResponseDto(
+public record UserResponseDto(
         String username,
         String nickname,
         RoleDto authorities

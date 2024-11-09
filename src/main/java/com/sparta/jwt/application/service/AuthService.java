@@ -1,7 +1,7 @@
 package com.sparta.jwt.application.service;
 
 import com.sparta.jwt.application.dto.request.JoinRequestDto;
-import com.sparta.jwt.application.dto.response.JoinResponseDto;
+import com.sparta.jwt.application.dto.response.UserResponseDto;
 import com.sparta.jwt.application.service.util.UserMapper;
 import com.sparta.jwt.domain.model.User;
 import com.sparta.jwt.domain.repository.UserRepository;
@@ -18,7 +18,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public JoinResponseDto join(JoinRequestDto joinRequestDto) {
+    public UserResponseDto join(JoinRequestDto joinRequestDto) {
         // username 중복 체크
         if (userRepository.existsByUsername(joinRequestDto.username())) {
             log.error("username already exists");
@@ -29,7 +29,7 @@ public class AuthService {
         // Todo: 추가 요구 사항이 있으면 그에 맞는 권한 로직 추가
         User user = userRepository.save(UserMapper.entityFrom(joinRequestDto.withPassword(passwordEncoder.encode(joinRequestDto.password()))));
 
-        return UserMapper.joinResponseDtoFrom(user);
+        return UserMapper.userResponseDtoFrom(user);
     }
 
 }
