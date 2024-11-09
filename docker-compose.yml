@@ -1,9 +1,7 @@
 services:
   jwt-app:
-    build:
-      context: .
-      dockerfile: Dockerfile  # Dockerfile로부터 이미지를 빌드
+    image: macdduck/jwt:latest  # 이미 Docker Hub에서 pull받은 이미지 사용
     ports:
-      - "8080:8080"
+      - "8080:8080"             # 포트 매핑
     env_file:
-      - .env  # .env 파일에서 환경 변수를 로드
+      - .env
