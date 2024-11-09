@@ -62,7 +62,7 @@ public class SecurityConfig {
         // 경로별 인가 작업
         http
                 .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
-                        .requestMatchers("/api/auth/**", "/api/users").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/users", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
                 );
 
