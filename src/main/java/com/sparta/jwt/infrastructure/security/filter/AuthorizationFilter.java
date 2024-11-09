@@ -27,6 +27,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // 예외 경로 설정
         String requestURI = request.getRequestURI();
+        log.info("requestURI: {}", requestURI);
         if (requestURI.equals("/api/auth/join") || requestURI.equals("/api/auth/login") || requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs")) {
             // 회원가입, 로그인 요청은 필터를 거치지 않고 다음 필터로 바로 이동
             filterChain.doFilter(request, response);
