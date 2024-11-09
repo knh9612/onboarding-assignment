@@ -1,5 +1,6 @@
 package com.sparta.jwt.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -9,6 +10,7 @@ public enum RoleEnum {
 
     private final String authorityName;
 
+    @JsonValue
     public String getAuthority() {
         return this.authorityName;
     }
