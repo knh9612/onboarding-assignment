@@ -6,9 +6,11 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -93,6 +95,39 @@ public class JwtUtil {
     }
 
     /**
+     * Header에서 Access Token 가져오는 메서드
+     * 접두사와 같이 가져옴
+     *
+     * @param request
+     * @return
+     */
+    public String getAccessTokenFromHeader(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
+            return bearerToken;
+        }
+        return null;
+    }
+
+    public String getAccessTokenValue(String accessToken) {
+        return accessToken.substring(7).trim();
+    }
+
+    /**
+     * Cookie에서 Refresh Token 가져오는 메서드
+     */
+    public String getRefreshTokenFromCookie(HttpServletRequest request) {
+        String refresh = null;
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(COOKIE_NAME)) {
+                refresh = cookie.getValue();
+            }
+        }
+        return refresh;
+    }
+
+    /**
      * Access 토큰 검증하는 메서드
      *
      * @param accessToken
@@ -100,7 +135,7 @@ public class JwtUtil {
      */
     public boolean isValidateAccessToken(String accessToken) {
         try {
-            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(accessToken);
+            Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(getAccessTokenValue(accessToken));
             return true;
 
             // Todo: 커스텀 예외
@@ -146,23 +181,23 @@ public class JwtUtil {
         }
     }
 
-    // Access 토큰에서 사용자 id 가져오기
-    public String getUserIdFromAccessToken(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get(AUTHENTICATION_KEY, String.class);
+    // Access 토큰에서 username 가져오기
+    public String getUsernameFromAccessToken(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(getAccessTokenValue(token)).getPayload().get(AUTHENTICATION_KEY, String.class);
     }
 
-    // Access 토큰에서 사용자 role 가져오기
+    // Access 토큰에서 userRole 가져오기
     public String getUserRoleFromAccessToken(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get(AUTHORIZATION_KEY, String.class);
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(getAccessTokenValue(token)).getPayload().get(AUTHORIZATION_KEY, String.class);
     }
 
-    // Refresh 토큰에서 사용자 정보 가져오기
-    public String getUserIdFromRefreshToken(String token) {
+    // Refresh 토큰에서 username 가져오기
+    public String getUsernameFromRefreshToken(String token) {
         return Jwts.parser().verifyWith(refreshSecretKey).build().parseSignedClaims(token).getPayload().get(AUTHENTICATION_KEY, String.class);
     }
 
+    // Refresh 토큰에서 userRole 가져오기
     public String getUserRoleFromRefreshToken(String token) {
         return Jwts.parser().verifyWith(refreshSecretKey).build().parseSignedClaims(token).getPayload().get(AUTHORIZATION_KEY, String.class);
     }
-
 }
