@@ -5,6 +5,8 @@ import com.sparta.jwt.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepository {
@@ -19,5 +21,10 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User save(User user) {
         return jpaUserRepository.save(user);
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return jpaUserRepository.findByUsername(username);
     }
 }

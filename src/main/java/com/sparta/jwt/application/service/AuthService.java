@@ -1,7 +1,7 @@
 package com.sparta.jwt.application.service;
 
-import com.sparta.jwt.application.dto.JoinRequestDto;
-import com.sparta.jwt.application.dto.JoinResponseDto;
+import com.sparta.jwt.application.dto.request.JoinRequestDto;
+import com.sparta.jwt.application.dto.response.JoinResponseDto;
 import com.sparta.jwt.application.service.util.UserMapper;
 import com.sparta.jwt.domain.model.User;
 import com.sparta.jwt.domain.repository.UserRepository;

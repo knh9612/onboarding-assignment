@@ -1,4 +1,4 @@
-package com.sparta.jwt.application.dto;
+package com.sparta.jwt.application.dto.request;
 
 import lombok.With;
 

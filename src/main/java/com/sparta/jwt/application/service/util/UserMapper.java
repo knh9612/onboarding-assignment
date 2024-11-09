@@ -1,7 +1,7 @@
 package com.sparta.jwt.application.service.util;
 
-import com.sparta.jwt.application.dto.JoinRequestDto;
-import com.sparta.jwt.application.dto.JoinResponseDto;
+import com.sparta.jwt.application.dto.request.JoinRequestDto;
+import com.sparta.jwt.application.dto.response.JoinResponseDto;
 import com.sparta.jwt.domain.model.User;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,7 @@ public class UserMapper {
         return JoinResponseDto.builder()
                 .username(user.getUsername())
                 .nickname(user.getNickname())
-                .authorities(user.getAuthorities())
+                .authorities(RoleMapper.toDto(user.getAuthorities()))
                 .build();
     }
 }

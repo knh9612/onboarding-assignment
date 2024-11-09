@@ -1,6 +1,6 @@
 package com.sparta.jwt.presentation.controller;
 
-import com.sparta.jwt.application.dto.JoinRequestDto;
+import com.sparta.jwt.application.dto.request.JoinRequestDto;
 import com.sparta.jwt.application.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
