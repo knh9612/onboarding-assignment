@@ -1,5 +1,6 @@
 package com.sparta.jwt.infrastructure.security.configuration;
 
+import com.sparta.jwt.infrastructure.security.filter.AuthorizationFilter;
 import com.sparta.jwt.infrastructure.security.filter.LoginFilter;
 import com.sparta.jwt.infrastructure.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,11 @@ public class SecurityConfig {
         return filter;
     }
 
+    @Bean
+    public AuthorizationFilter authorizationFilter() {
+        return new AuthorizationFilter(jwtUtil);
+    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -56,13 +62,13 @@ public class SecurityConfig {
         // 경로별 인가 작업
         http
                 .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/users").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
                 );
 
         // 필터 추가
-        http
-                .addFilterAt(loginFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authorizationFilter(), LoginFilter.class);
+        http.addFilterAt(loginFilter(), UsernamePasswordAuthenticationFilter.class);
 
         // 기본 설정인 Session 방식은 사용하지 않고 JWT 방식을 사용하기 위한 설정
         // 세션을 stateless상태로 관리!
