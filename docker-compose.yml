@@ -5,3 +5,23 @@ services:
       - "8080:8080"             # 포트 매핑
     env_file:
       - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis: # container name
+    image: redis:latest
+    ports: # 바인딩할 포트:내부 포트
+      - ${REDIS_OUTER_PORT}:${REDIS_INNER_PORT}
+    volumes: # 마운트할 볼륨 설정
+      - redis_data:/var/lib/redis/user/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf # 파일 경로 수정
+    networks:
+      - flash-sale-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]  # redis-cli ping 명령어로 상태 확인
+      interval: 30s  # 헬스 체크 간격
+      timeout: 10s   # 응답 대기 시간
+      retries: 5     # 실패 후 재시도 횟수
+      start_period: 10s  # 컨테이너 시작 후 첫 헬스 체크까지 대기 시간
+    restart: always
