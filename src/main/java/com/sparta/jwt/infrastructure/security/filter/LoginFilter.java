@@ -3,6 +3,8 @@ package com.sparta.jwt.infrastructure.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.jwt.application.dto.request.LoginRequestDto;
 import com.sparta.jwt.application.dto.response.LoginResponseDto;
+import com.sparta.jwt.application.service.util.CacheUtil;
+import com.sparta.jwt.application.service.util.UserMapper;
 import com.sparta.jwt.infrastructure.security.UserDetailsImpl;
 import com.sparta.jwt.infrastructure.security.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -24,6 +26,7 @@ import java.io.IOException;
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final JwtUtil jwtUtil;
+    private final CacheUtil cacheUtil;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -53,7 +56,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String accessToken = jwtUtil.createAccessToken(username, role);
         String refreshToken = jwtUtil.createRefreshToken(username, role);
 
-        // Todo: redis에 저장
+        cacheUtil.saveRefreshToken(username, UserMapper.userInfoFrom(username, role, refreshToken));
 
         response.addHeader(jwtUtil.AUTHORIZATION_HEADER, accessToken);
         response.addCookie(jwtUtil.createCookieWithRefreshToken(refreshToken));

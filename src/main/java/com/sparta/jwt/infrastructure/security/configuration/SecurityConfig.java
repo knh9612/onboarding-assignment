@@ -1,6 +1,8 @@
 package com.sparta.jwt.infrastructure.security.configuration;
 
+import com.sparta.jwt.application.service.util.CacheUtil;
 import com.sparta.jwt.infrastructure.security.filter.AuthorizationFilter;
+import com.sparta.jwt.infrastructure.security.filter.CustomLogoutFilter;
 import com.sparta.jwt.infrastructure.security.filter.LoginFilter;
 import com.sparta.jwt.infrastructure.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -26,6 +29,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final CacheUtil cacheUtil;
     private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
@@ -40,7 +44,7 @@ public class SecurityConfig {
 
     @Bean
     public LoginFilter loginFilter() throws Exception {
-        LoginFilter filter = new LoginFilter(jwtUtil);
+        LoginFilter filter = new LoginFilter(jwtUtil, cacheUtil);
         filter.setAuthenticationManager(authenticationManager(authenticationConfiguration));
         filter.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher("/sign", "POST"));
         return filter;
@@ -48,7 +52,12 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationFilter authorizationFilter() {
-        return new AuthorizationFilter(jwtUtil);
+        return new AuthorizationFilter(jwtUtil, cacheUtil);
+    }
+
+    @Bean
+    public CustomLogoutFilter customLogoutFilter() {
+        return new CustomLogoutFilter(jwtUtil, cacheUtil);
     }
 
 
@@ -69,6 +78,7 @@ public class SecurityConfig {
         // 필터 추가
         http.addFilterBefore(authorizationFilter(), LoginFilter.class);
         http.addFilterAt(loginFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(customLogoutFilter(), LogoutFilter.class);
 
         // 기본 설정인 Session 방식은 사용하지 않고 JWT 방식을 사용하기 위한 설정
         // 세션을 stateless상태로 관리!

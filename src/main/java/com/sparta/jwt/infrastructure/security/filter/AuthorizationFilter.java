@@ -1,5 +1,9 @@
 package com.sparta.jwt.infrastructure.security.filter;
 
+import com.sparta.jwt.application.dto.ReissuedTokenDto;
+import com.sparta.jwt.application.dto.UserInfoDto;
+import com.sparta.jwt.application.service.util.CacheUtil;
+import com.sparta.jwt.application.service.util.UserMapper;
 import com.sparta.jwt.infrastructure.security.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,6 +26,7 @@ import java.util.Collections;
 public class AuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final CacheUtil cacheUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -38,25 +43,25 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         String refreshToken = jwtUtil.getRefreshTokenFromCookie(request);
 
         if (accessToken == null || refreshToken == null) {
-            log.error("헤더에 Access 토큰이 존재하지 않음");
-            throw new RuntimeException("헤더에 Access 토큰이 존재하지 않음");
+            log.error("토큰이 존재하지 않음");
+            throw new RuntimeException("토큰이 존재하지 않음");
+        }
+
+        if (cacheUtil.getBlackAccessToken(accessToken) != null) {
+            log.error("로그아웃 된 사용자. 유효하지 않은 토큰");
+            throw new RuntimeException("로그아웃 된 사용자. 유효하지 않은 토큰");
         }
 
         // 유효한 토큰이면 Authentication 객체 생성
         // 만료된 토큰이면, Refresh Token 검증 후 재발급
         // 유효하지 않은 토큰이면 예외처리
         if (!jwtUtil.isValidateAccessToken(accessToken)) {
-            if (jwtUtil.isValidateRefreshToken(refreshToken)) {
-                log.info("Refresh Token으로 토큰 재발급");
+            log.info("Refresh Token으로 토큰 재발급");
+            accessToken = reissue(refreshToken).accessToken();
+            refreshToken = reissue(accessToken).refreshToken();
 
-                String username = jwtUtil.getUsernameFromRefreshToken(refreshToken);
-                String userRole = jwtUtil.getUserRoleFromRefreshToken(refreshToken);
-                accessToken = jwtUtil.createAccessToken(username, userRole);
-                refreshToken = jwtUtil.createRefreshToken(username, userRole);
-
-                response.addHeader(jwtUtil.AUTHORIZATION_HEADER, accessToken);
-                response.addCookie(jwtUtil.createCookieWithRefreshToken(refreshToken));
-            }
+            response.addHeader(jwtUtil.AUTHORIZATION_HEADER, accessToken);
+            response.addCookie(jwtUtil.createCookieWithRefreshToken(refreshToken));
         }
         // 인증 처리
         String username = jwtUtil.getUsernameFromAccessToken(accessToken);
@@ -71,6 +76,28 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         User user = new User(username, "", Collections.singletonList(new SimpleGrantedAuthority(userRole)));
         Authentication authentication = new UsernamePasswordAuthenticationToken(user, "", user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    // 토큰 재발급 메서드
+    public ReissuedTokenDto reissue(String refreshToken) {
+        String username = jwtUtil.getUsernameFromRefreshToken(refreshToken);
+        String userRole = jwtUtil.getUserRoleFromRefreshToken(refreshToken);
+
+        UserInfoDto validRefreshToken = cacheUtil.getValidRefreshToken(username);
+        if (validRefreshToken == null) {
+            log.error("Refresh Token이 존재하지 않음");
+            throw new RuntimeException("Refresh Token이 존재하지 않음");
+
+        } else {
+            jwtUtil.isValidateRefreshToken(refreshToken);
+        }
+
+        String reissuedAccess = jwtUtil.createAccessToken(username, userRole);
+        String reissuedRefresh = jwtUtil.createRefreshToken(username, userRole);
+
+        cacheUtil.saveRefreshToken(username, UserMapper.userInfoFrom(username, userRole, reissuedRefresh));
+
+        return new ReissuedTokenDto(reissuedAccess, reissuedRefresh);
     }
 
 }

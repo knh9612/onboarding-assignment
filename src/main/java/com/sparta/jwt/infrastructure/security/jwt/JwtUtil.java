@@ -117,15 +117,18 @@ public class JwtUtil {
      * Cookie에서 Refresh Token 가져오는 메서드
      */
     public String getRefreshTokenFromCookie(HttpServletRequest request) {
-        String refresh = null;
         Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals(COOKIE_NAME)) {
-                refresh = cookie.getValue();
+        if (cookies != null) { // null 체크 추가
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(COOKIE_NAME)) {
+                    return cookie.getValue();
+                }
             }
         }
-        return refresh;
+        log.error("Refresh Token Cookie not found");
+        return null; // 쿠키가 없으면 null 반환
     }
+
 
     /**
      * Access 토큰 검증하는 메서드
