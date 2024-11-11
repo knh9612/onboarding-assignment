@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j(topic = "Auth Controller")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/auth")
+@RequestMapping
 @Tag(name = "Auth API", description = "Auth 관련 API")
 public class AuthController {
 
     private final AuthService authService;
 
     @Operation(summary = "회원가입")
-    @PostMapping("/join")
+    @PostMapping("/signup")
     public ResponseEntity<?> join(@RequestBody JoinRequestDto joinRequestDto) {
         return ResponseEntity.ok(authService.join(joinRequestDto));
     }

@@ -28,14 +28,13 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         // 예외 경로 설정
         String requestURI = request.getRequestURI();
         log.info("requestURI: {}", requestURI);
-        if (requestURI.equals("/api/auth/join") || requestURI.equals("/api/auth/login") || requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs")) {
+        if (requestURI.equals("/signup") || requestURI.equals("/sign") || requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs")) {
             // 회원가입, 로그인 요청은 필터를 거치지 않고 다음 필터로 바로 이동
             filterChain.doFilter(request, response);
             return;
         }
 
         String accessToken = jwtUtil.getAccessTokenFromHeader(request);
-        System.out.println("accessToken 1 = " + accessToken);
         String refreshToken = jwtUtil.getRefreshTokenFromCookie(request);
 
         if (accessToken == null || refreshToken == null) {
@@ -48,14 +47,12 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         // 유효하지 않은 토큰이면 예외처리
         if (!jwtUtil.isValidateAccessToken(accessToken)) {
             if (jwtUtil.isValidateRefreshToken(refreshToken)) {
+                log.info("Refresh Token으로 토큰 재발급");
+
                 String username = jwtUtil.getUsernameFromRefreshToken(refreshToken);
-                System.out.println("username = " + username);
                 String userRole = jwtUtil.getUserRoleFromRefreshToken(refreshToken);
-                System.out.println("userRole = " + userRole);
                 accessToken = jwtUtil.createAccessToken(username, userRole);
-                System.out.println("accessToken 2 = " + accessToken);
                 refreshToken = jwtUtil.createRefreshToken(username, userRole);
-                System.out.println("refreshToken = " + refreshToken);
 
                 response.addHeader(jwtUtil.AUTHORIZATION_HEADER, accessToken);
                 response.addCookie(jwtUtil.createCookieWithRefreshToken(refreshToken));
@@ -63,9 +60,7 @@ public class AuthorizationFilter extends OncePerRequestFilter {
         }
         // 인증 처리
         String username = jwtUtil.getUsernameFromAccessToken(accessToken);
-        System.out.println("username = " + username);
         String userRole = jwtUtil.getUserRoleFromAccessToken(accessToken);
-        System.out.println("userRole = " + userRole);
         setAuthentication(username, userRole);
 
         filterChain.doFilter(request, response);
